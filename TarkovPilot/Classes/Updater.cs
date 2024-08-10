@@ -130,7 +130,7 @@ namespace TarkovPilot
             }
         }
 
-        public static void PrintAfterUpdateLog(string[] args)
+        public static void CheckAfterUpdateLogic(string[] args)
         {
             if (args.Length > 0)
             {
@@ -138,8 +138,25 @@ namespace TarkovPilot
                 if (updArg == "updated")
                 {
                     Logger.Log($"Updater: update installed succesfully");
+                    CleanUp();
                 }
             }
+        }
+
+        static void CleanUp()
+        {
+            try
+            {
+                if (Directory.Exists(extractPath))
+                {
+                    Directory.Delete(extractPath, true);
+                }
+                if (File.Exists(zipPath))
+                {
+                    File.Delete(zipPath);
+                }
+            }
+            catch (Exception) { };
         }
     }
 }

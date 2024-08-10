@@ -35,7 +35,7 @@ namespace TarkovPilot
         static void StartApp(string[] args)
         {
             // after update logs
-            Updater.PrintAfterUpdateLog(args);
+            Updater.CheckAfterUpdateLogic(args);
 
             // app start
             Logger.Log($"Tarkov Pilot started");
