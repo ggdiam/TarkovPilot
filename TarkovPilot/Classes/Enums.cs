@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TarkovPilot
+﻿namespace TarkovPilot
 {
     public static class WsMessageType
     {
         public const string POSITION_UPDATE = "POSITION_UPDATE";
+        public const string MAP_CHANGE = "MAP_CHANGE";
         public const string CONFIGURATION = "CONFIGURATION";
         public const string SETTINGS_UPDATE = "SETTINGS_UPDATE";
         public const string SETTINGS_RESET = "SETTINGS_RESET";

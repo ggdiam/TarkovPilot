@@ -1,21 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TarkovPilot
+﻿namespace TarkovPilot
 {
-    public class UpdatePositionData : WsMessage
+    public class MapChangeData : WsMessage
     {
         public string map { get; set; }
+
+        public override string ToString()
+        {
+            return $"{map}";
+        }
+    }
+
+    public class UpdatePositionData : WsMessage
+    {
         public float x { get; set; }
         public float y { get; set; }
         public float z { get; set; }
 
         public override string ToString()
         {
-            return $"map:{map} x:{x} y:{y} z:{z}";
+            return $"x:{x} y:{y} z:{z}";
         }
     }
 

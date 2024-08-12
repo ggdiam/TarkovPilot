@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.WebSockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -11,7 +7,7 @@ using System.Text.Json;
 using Fleck;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Dynamic;
+using System.Reflection;
 
 namespace TarkovPilot
 {
@@ -54,8 +50,10 @@ namespace TarkovPilot
             // Server start
             StartServer();
 
-            //var posTask = Task.Run(() => SendRandomPosition());
-            //await posTask;
+#if DEBUG
+            var posTask = Task.Run(() => SendRandomPosition());
+            await posTask;
+#endif
         }
 
         static void StartServer()
@@ -93,9 +91,28 @@ namespace TarkovPilot
             while (!isClosing)
             {
                 Random rnd = new Random();
-                SendPosition(new Position(rnd.Next(10) * 10, rnd.Next(10) * 10, rnd.Next(10) * 10));
 
-                Thread.Sleep(3000);
+                var fields = typeof(MapName).GetFields(BindingFlags.Public | BindingFlags.Static)
+                                   .Where(f => f.FieldType == typeof(string))
+                                   .Select(f => (string)f.GetValue(null))
+                                   .ToArray();
+                var map = fields[rnd.Next(fields.Length)];
+                
+                // waiting, to be sure messages order
+                SendMap(map);
+                Thread.Sleep(2000);
+
+                // lab 0,0 position fix
+                if (map == MapName.The_Lab)
+                {
+                    SendPosition(new Position(rnd.Next(10) * 10 - 340, rnd.Next(10) * 10 - 200, rnd.Next(10) * 10));
+                }
+                else
+                {
+                    SendPosition(new Position(rnd.Next(10) * 10, rnd.Next(10) * 10, rnd.Next(10) * 10));
+                }
+
+                Thread.Sleep(5000);
             }
         }
 
@@ -140,19 +157,30 @@ namespace TarkovPilot
             }
         }
 
+        public static void SendMap(string map)
+        {
+            MapChangeData data = new MapChangeData()
+            {
+                messageType = WsMessageType.MAP_CHANGE,
+                map = map,
+            };
+
+            Logger.Log($"MapChange: {data}");
+            SendData(data);
+        }
+
         public static void SendPosition(Position pos)
         {
-            UpdatePositionData position = new UpdatePositionData()
+            UpdatePositionData posData = new UpdatePositionData()
             {
                 messageType = WsMessageType.POSITION_UPDATE,
-                //map = MapName.Customs,
                 x = pos.X,
                 y = pos.Y,
                 z = pos.Z,
             };
 
-            Logger.Log($"SendPosition {position}");
-            SendData(position);
+            Logger.Log($"UpdatePosition: {posData}");
+            SendData(posData);
         }
 
         public static void SendConfiguration()
