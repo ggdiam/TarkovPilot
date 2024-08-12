@@ -17,6 +17,8 @@ namespace TarkovPilot
         [STAThread]
         static void Main(string[] args)
         {
+            SetCulture();
+
             bool createdNew;
             using (Mutex mutex = new Mutex(true, "TarkovPilotMutex", out createdNew))
             {
@@ -30,6 +32,17 @@ namespace TarkovPilot
                     // Exit
                 }
             }
+        }
+
+        static void SetCulture()
+        {
+            // make floats with dots
+            CultureInfo customCulture = (CultureInfo)Thread.CurrentThread.CurrentCulture.Clone();
+            customCulture.NumberFormat.NumberDecimalSeparator = ".";
+            Thread.CurrentThread.CurrentCulture = customCulture;
+
+            // or
+            //Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
         }
 
         static void StartApp(string[] args)

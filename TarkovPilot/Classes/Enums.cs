@@ -22,5 +22,5 @@
         public const string The_Lab = "The Lab";
         public const string Lighthouse = "Lighthouse";
         public const string Streets_of_Tarkov = "Streets of Tarkov";
-    }
+    }    
 }

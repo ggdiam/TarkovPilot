@@ -8,6 +8,7 @@ using Fleck;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
+using System.Globalization;
 
 namespace TarkovPilot
 {
@@ -51,8 +52,8 @@ namespace TarkovPilot
             StartServer();
 
 #if DEBUG
-            var posTask = Task.Run(() => SendRandomPosition());
-            await posTask;
+            //var posTask = Task.Run(() => SendRandomPosition());
+            //await posTask;
 #endif
         }
 
@@ -97,7 +98,7 @@ namespace TarkovPilot
                                    .Select(f => (string)f.GetValue(null))
                                    .ToArray();
                 var map = fields[rnd.Next(fields.Length)];
-                
+
                 // waiting, to be sure messages order
                 SendMap(map);
                 Thread.Sleep(2000);
@@ -109,7 +110,7 @@ namespace TarkovPilot
                 }
                 else
                 {
-                    SendPosition(new Position(rnd.Next(10) * 10, rnd.Next(10) * 10, rnd.Next(10) * 10));
+                    SendPosition(new Position(rnd.Next(10) * 10 - 0.3f, rnd.Next(10) * 10 + 0.3f, rnd.Next(10) * 10));
                 }
 
                 Thread.Sleep(5000);
@@ -159,14 +160,17 @@ namespace TarkovPilot
 
         public static void SendMap(string map)
         {
-            MapChangeData data = new MapChangeData()
+            if (Env.MapChangeEnabled)
             {
-                messageType = WsMessageType.MAP_CHANGE,
-                map = map,
-            };
+                MapChangeData data = new MapChangeData()
+                {
+                    messageType = WsMessageType.MAP_CHANGE,
+                    map = map,
+                };
 
-            Logger.Log($"MapChange: {data}");
-            SendData(data);
+                Logger.Log($"Map: {data}");
+                SendData(data);
+            }
         }
 
         public static void SendPosition(Position pos)
@@ -179,7 +183,7 @@ namespace TarkovPilot
                 z = pos.Z,
             };
 
-            Logger.Log($"UpdatePosition: {posData}");
+            Logger.Log($"Position: {posData}");
             SendData(posData);
         }
 
@@ -191,6 +195,7 @@ namespace TarkovPilot
                 version = Env.Version,
                 gameFolder = Env.GameFolder,
                 screenshotsFolder = Env.ScreenshotsFolder,
+                mapChangeEnabled = Env.MapChangeEnabled,
             };
 
             SendData(data);
