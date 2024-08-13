@@ -57,9 +57,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classes\DataTypes.cs" />
+    <Compile Include="Classes\Dict.cs" />
     <Compile Include="Classes\Enums.cs" />
     <Compile Include="Classes\Env.cs" />
+    <Compile Include="Classes\FileChangedEventArgs.cs" />
     <Compile Include="Classes\LimitedConcurrentQueue.cs" />
+    <Compile Include="Classes\LogFileWatcher.cs" />
     <Compile Include="Classes\Logger.cs" />
     <Compile Include="Classes\LogsWatcher.cs" />
     <Compile Include="Classes\Position.cs" />

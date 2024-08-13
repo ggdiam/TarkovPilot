@@ -31,10 +31,9 @@ namespace TarkovPilot
 
         public static void Restart()
         {
+            Env.InitialLogsRead = true;
             ScreenshotsWatcher.Restart();
             LogsWatcher.Restart();
         }
-
-        
     }
 }

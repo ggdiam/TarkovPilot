@@ -19,17 +19,15 @@ namespace TarkovPilot
         {
             if (!Directory.Exists(Env.ScreenshotsFolder))
             {
-                Directory.CreateDirectory(Env.ScreenshotsFolder);
-                Logger.Log($"Watcher: folder created: '{Env.ScreenshotsFolder}'");
+                Logger.Log($"Watcher: screenshots folder not found: '{Env.ScreenshotsFolder}'");
+                return;
             }
             
             Logger.Log($"Watcher: monitoring screenshots folder: '{Env.ScreenshotsFolder}'");
 
-            screenshotsWatcher = new FileSystemWatcher(Env.ScreenshotsFolder)
-            {
-                EnableRaisingEvents = true,
-            };
+            screenshotsWatcher = new FileSystemWatcher(Env.ScreenshotsFolder);
             screenshotsWatcher.Created += OnScreenshot;
+            screenshotsWatcher.EnableRaisingEvents = true;
         }
 
         public static void Stop()

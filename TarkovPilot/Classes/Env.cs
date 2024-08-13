@@ -20,6 +20,9 @@ namespace TarkovPilot
             Version = versionInfo.FileVersion;
         }
 
+        // first logs read on app start
+        public static bool InitialLogsRead { get; set; } = true;
+
         public static string Version = "0.0";
 
 #if DEBUG

@@ -37,12 +37,12 @@ namespace TarkovPilot
         static void SetCulture()
         {
             // make floats with dots
-            CultureInfo customCulture = (CultureInfo)Thread.CurrentThread.CurrentCulture.Clone();
-            customCulture.NumberFormat.NumberDecimalSeparator = ".";
-            Thread.CurrentThread.CurrentCulture = customCulture;
+            //CultureInfo customCulture = (CultureInfo)Thread.CurrentThread.CurrentCulture.Clone();
+            //customCulture.NumberFormat.NumberDecimalSeparator = ".";
+            //Thread.CurrentThread.CurrentCulture = customCulture;
 
             // or
-            //Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
         }
 
         static void StartApp(string[] args)
