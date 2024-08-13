@@ -55,14 +55,12 @@ namespace TarkovPilot
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    string latestVersionString = await client.GetStringAsync(VERSION_URL);
-                    latestVersionString = latestVersionString.Trim();
-                    Version latestVersion = new Version(latestVersionString);
-                    Version currentVersion = new Version(Env.Version);
+                    string latestVersion = await client.GetStringAsync(VERSION_URL);
+                    latestVersion = latestVersion.Trim();
 
-                    if (latestVersion > currentVersion)
+                    if (latestVersion != Env.Version)
                     {
-                        return latestVersionString;
+                        return latestVersion;
                     }
                     else
                     {
