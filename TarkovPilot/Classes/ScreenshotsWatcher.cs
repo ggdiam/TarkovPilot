@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace TarkovPilot
 {
@@ -58,12 +55,16 @@ namespace TarkovPilot
                     var _position = match.Groups["position"].Value;
                     //Logger.Log($"Watcher:OnScreenshot position [{_position}]");
                     var posMatch = Regex.Match(_position, PositionRe);
+
                     if (posMatch.Success)
                     {
                         var position = new Position(posMatch.Groups["x"].Value, posMatch.Groups["y"].Value, posMatch.Groups["z"].Value);
                         //Logger.Log($"Watcher:OnScreenshot position {position}");
                         Server.SendPosition(position);
                     }
+                    
+                    if (Properties.Settings.Default.RemoveImage && File.Exists(e.FullPath))
+                        File.Delete(e.FullPath);
                 }
             }
             catch (Exception ex)
