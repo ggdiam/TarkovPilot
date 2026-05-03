@@ -4,9 +4,11 @@
     {
         public string gameFolder { get; set; }
         public string screenshotsFolder { get; set; }
+        // host сайта (tarkov-market.com / tarkov-market.ru); приходит от вкладки в SETTINGS_INIT
+        public string host { get; set; }
         public override string ToString()
         {
-            return $"gameFolder: '{gameFolder}' \nscreenshotsFolder: '{screenshotsFolder}'";
+            return $"gameFolder: '{gameFolder}' \nscreenshotsFolder: '{screenshotsFolder}' \nhost: '{host}'";
         }
     }
 
@@ -77,6 +79,11 @@
 
     public class UpdateSettingsData : AppSettings
     {
-        public string messageType { get; set; }        
+        public string messageType { get; set; }
+    }
+
+    public class SettingsInitData : WsMessage
+    {
+        public string host { get; set; }
     }
 }

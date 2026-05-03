@@ -43,7 +43,7 @@ namespace TarkovPilot
             }
         }
 
-        public static async void Start()
+        public static void Start()
         {
             isClosing = false;
 
@@ -308,6 +308,15 @@ namespace TarkovPilot
             else if (msg != null && msg.messageType == WsMessageType.UPDATE)
             {
                 Updater.CheckUpdate();
+            }
+            else if (msg != null && msg.messageType == WsMessageType.SETTINGS_INIT)
+            {
+                // host от вкладки сайта — выбираем .com или .ru, чтобы апдейты ходили на правильный домен
+                var info = ParseJson<SettingsInitData>(json);
+                if (Env.SetHostFromSite(info?.host))
+                {
+                    Settings.Save();
+                }
             }
             else
             {

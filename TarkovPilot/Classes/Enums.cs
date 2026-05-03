@@ -9,6 +9,7 @@
         public const string CONFIGURATION = "CONFIGURATION";
         public const string SETTINGS_UPDATE = "SETTINGS_UPDATE";
         public const string SETTINGS_RESET = "SETTINGS_RESET";
+        public const string SETTINGS_INIT = "SETTINGS_INIT";
         public const string UPDATE = "UPDATE";
     }
 

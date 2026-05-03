@@ -10,14 +10,7 @@ namespace TarkovPilot
 {
     public class Updater
     {
-#if DEBUG
-        const string UPDATE_URL = "http://localhost:3000/pilot/update.zip";
-        const string VERSION_URL = "http://localhost:3000/api/be/pilot/version";
-#else
-        const string UPDATE_URL = "https://tarkov-market.com/pilot/update.zip";
-        const string VERSION_URL = "https://tarkov-market.com/api/be/pilot/version";
-#endif
-
+        // URL для апдейтера берём динамически из Env — host прокидывается с сайта через SETTINGS_INIT
         const string UPDATE_FILE_NAME = "update.zip";
         const string UPDATE_FOLDER = "update";
 
@@ -55,7 +48,7 @@ namespace TarkovPilot
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    string latestVersion = await client.GetStringAsync(VERSION_URL);
+                    string latestVersion = await client.GetStringAsync(Env.VersionUrl);
                     latestVersion = latestVersion.Trim();
 
                     if (latestVersion != Env.Version)
@@ -81,7 +74,7 @@ namespace TarkovPilot
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    byte[] data = await client.GetByteArrayAsync(UPDATE_URL);
+                    byte[] data = await client.GetByteArrayAsync(Env.UpdateZipUrl);
 
                     File.WriteAllBytes(UPDATE_FILE_NAME, data);
                 }
