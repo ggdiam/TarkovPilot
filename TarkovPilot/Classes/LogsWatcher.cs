@@ -10,13 +10,15 @@ namespace TarkovPilot
 {
     public static class LogsWatcher
     {
-        // PVP Map change - application.log
+        // PVP / PVE Map change - application_000.log
         static readonly string LOCATION_SUBSTRING = "application|TRACE-NetworkGameCreate profileStatus";
         static readonly string LocationRe = @"location:\s*(?<loc>\S+),";
-        static readonly string NOTIFICATION_SUBSTRING = "push-notifications|Got notification | ChatMessageReceived";
+
+        // Task complete - push-notifications_000.log
+        static readonly string TASK_SUBSTRING = "push-notifications|Got notification | ChatMessageReceived";
         static readonly string LINE_START_WITH_DATE = "^\\d{4}-\\d{2}-\\d{2} \\d{1,2}:\\d{1,2}:\\d{1,2}.\\d{3}";
 
-        // PVE Map change - application.log
+        // PVE Map change - application_000.log
         static readonly string LOCATION_SUBSTRING2 = "application|scene preset";
         static readonly string LocationRe2 = @"path:maps\/(?<loc>\w+)\.bundle";
 
@@ -118,7 +120,7 @@ namespace TarkovPilot
             appLogFileWatcher.Start();
 
             // log file watcher
-            notifLogFileWatcher = new LogFileWatcher(logsFolder, "*notifications_*.log");
+            notifLogFileWatcher = new LogFileWatcher(logsFolder, "*push-notifications_*.log");
             notifLogFileWatcher.Created += OnLogFileChanged;
             notifLogFileWatcher.Changed += OnLogFileChanged;
             notifLogFileWatcher.Start();
@@ -220,7 +222,7 @@ namespace TarkovPilot
                                     Server.SendMap(map);
                                 }
                             }
-                            else if (line.Contains(NOTIFICATION_SUBSTRING))
+                            else if (line.Contains(TASK_SUBSTRING))
                             {
                                 // reading json
                                 StringBuilder jsonBuilder = new StringBuilder();
