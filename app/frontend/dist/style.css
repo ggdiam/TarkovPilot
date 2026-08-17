@@ -1,0 +1,446 @@
+/* TarkovPilot v2 — the tarkov-market website palette (assets/css/tokens.css):
+   black background, mocha accent #9a8866, green #70a800, overlay surfaces */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* values mirror the website's --tm-* tokens */
+    --bg: #000;                             /* --tm-bg */
+    --bg-hover: #222;                       /* --tm-bg-hover */
+    --surface: rgba(255, 255, 255, 0.05);   /* --tm-surface-1 */
+    --surface-2: rgba(255, 255, 255, 0.09); /* --tm-surface-2 */
+    --panel: #12161c;                       /* --tm-panel */
+    --text: #ddd;                           /* --tm-text-bright */
+    --text-input: #999;                     /* --tm-text-input */
+    --muted: #808080;                       /* --tm-neutral */
+    --alt: #aeaeb0;                         /* --tm-alt */
+    --accent: #9a8866;                      /* --tm-text (mocha) */
+    --accent-light: hsl(39, 20%, 65%);      /* --tm-text-light */
+    --ok: #70a800;                          /* --tm-plus */
+    --err: #ff0000;                         /* --tm-red */
+    --cta: #e85b46;                         /* --tm-cta */
+    --border-faint: #262626;                /* --tm-border-faint */
+    --divider: #212121;                     /* --tm-divider */
+    --scroll-track: #333;                   /* --tm-scroll-track */
+    --scroll-thumb: #111;                   /* --tm-scroll-thumb */
+    --radius: 5px;                          /* --tm-radius */
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    font-size: 14px;
+    user-select: none;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+.wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    padding: 12px 16px 14px;
+    gap: 12px;
+}
+
+/* custom title bar (frameless window): the whole header is a Wails drag zone,
+   buttons inside opt out via no-drag */
+.titlebar {
+    --wails-draggable: drag;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding-left: 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--divider);
+}
+
+.titlebar button {
+    --wails-draggable: no-drag;
+}
+
+.brand {
+    display: flex;
+    align-items: baseline;
+    flex: 1;
+}
+
+.lang-switch {
+    margin-right: 10px;
+}
+
+/* window buttons: Segoe MDL2 Assets glyphs (stock Windows 10+ font) */
+.win-btns {
+    display: flex;
+    align-self: stretch;
+}
+
+.win-btn {
+    width: 44px;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    background: none;
+    color: var(--muted);
+    font-family: "Segoe MDL2 Assets";
+    font-size: 10px;
+}
+
+.win-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.win-close:hover {
+    background: #c42b1c; /* red close-button hover, like the native title bar */
+    color: #fff;
+}
+
+.brand-name {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text);
+}
+
+.accent {
+    color: var(--accent);
+}
+
+.version {
+    margin-left: 8px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.lang-switch {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.region-lbl {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 4px;
+}
+
+.lang-btn {
+    background: none;
+    border: 1px solid var(--border-faint);
+    color: var(--muted);
+    padding: 2px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: var(--radius);
+}
+
+.lang-btn.active {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* connection status: nokey/checking — grey, ok — green, badkey/offline — red */
+.conn-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.conn-bar .dot {
+    background: var(--muted);
+}
+
+.conn-bar.ok {
+    color: var(--ok);
+    border-color: var(--ok);
+}
+
+.conn-bar.ok .dot {
+    background: var(--ok);
+}
+
+.conn-bar.badkey,
+.conn-bar.offline {
+    color: var(--err);
+    border-color: var(--err);
+}
+
+.conn-bar.badkey .dot,
+.conn-bar.offline .dot {
+    background: var(--err);
+}
+
+.update-banner {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.update-banner button {
+    margin-left: auto;
+    border-color: var(--cta);
+    color: var(--cta);
+}
+
+.update-banner button:hover {
+    background: var(--cta);
+    color: var(--bg);
+}
+
+.hidden {
+    display: none !important;
+}
+
+section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+section.grow {
+    flex: 1;
+    min-height: 0;
+}
+
+.sec-title {
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.row {
+    display: flex;
+    gap: 8px;
+}
+
+input[type="text"] {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius);
+    color: var(--text-input);
+    padding: 7px 10px;
+    font-size: 14px;
+    font-family: Consolas, monospace;
+    outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+button {
+    background: none;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    color: var(--accent);
+    padding: 6px 16px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:hover {
+    background: var(--bg-hover);
+    color: var(--accent-light);
+}
+
+.hint {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.hint a {
+    color: var(--accent);
+}
+
+.saved-note {
+    color: var(--ok);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-grid {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.status-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--divider);
+    min-height: 38px;
+}
+
+.status-row:last-child {
+    border-bottom: none;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    flex: 0 0 10px;
+    background: var(--err);
+}
+
+.dot.ok {
+    background: var(--ok);
+}
+
+.status-name {
+    flex: 0 0 110px;
+    font-weight: 600;
+}
+
+.status-note {
+    color: var(--muted);
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.status-note.path {
+    font-family: Consolas, monospace;
+    color: var(--alt);
+    direction: rtl;
+    text-align: left;
+}
+
+/* status error — a separate line under the path, not inside the path field */
+.status-err {
+    flex: 1 1 100%;
+    color: var(--err);
+    font-size: 12.5px;
+    padding-left: 20px; /* aligns with the text after the indicator dot */
+}
+
+.row-btns {
+    display: flex;
+    gap: 6px;
+}
+
+.row-btns button {
+    padding: 3px 10px;
+    font-size: 12px;
+}
+
+.opt-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 16px;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.opt {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    min-width: 0;
+}
+
+.opt input[type="checkbox"] {
+    accent-color: var(--accent);
+}
+
+select {
+    background: var(--panel);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
+.event-log {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    font-family: Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--muted);
+    white-space: pre-wrap;
+    user-select: text;
+}
+
+.event-log::-webkit-scrollbar {
+    width: 10px;
+}
+
+.event-log::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb);
+    border: 1px solid var(--scroll-track);
+}
+
+.event-log::-webkit-scrollbar-track {
+    background: var(--scroll-track);
+}
+
+footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    border-top: 1px solid var(--divider);
+    padding-top: 8px;
+}
+
+.quit-btn {
+    border-color: var(--err);
+    color: var(--err);
+    padding: 4px 14px;
+    font-size: 13px;
+}
+
+.quit-btn:hover {
+    background: var(--err);
+    color: var(--bg);
+}

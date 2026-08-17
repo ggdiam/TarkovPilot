@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TarkovPilot</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <!-- custom title bar: frameless window, the whole header is a Wails drag zone -->
+    <header class="titlebar">
+        <div class="brand">
+            <span class="brand-name">Tarkov<span class="accent">Pilot</span></span>
+            <span class="version" id="version"></span>
+        </div>
+        <div class="lang-switch">
+            <span class="region-lbl" data-i18n="region">Region</span>
+            <button id="lang-en" class="lang-btn">EN</button><button id="lang-ru" class="lang-btn">RU</button>
+        </div>
+        <div class="win-btns">
+            <button class="win-btn" id="btn-min">&#xE921;</button>
+            <button class="win-btn win-close" id="btn-close">&#xE8BB;</button>
+        </div>
+    </header>
+
+    <div class="wrap">
+
+        <!-- server connection status -->
+        <div id="conn-bar" class="conn-bar">
+            <span class="dot" id="dot-conn"></span>
+            <span id="conn-text"></span>
+        </div>
+
+        <!-- update -->
+        <div id="update-banner" class="update-banner hidden">
+            <span data-i18n="updateAvailable">New version available</span>: <b id="latest-version"></b>
+            <button id="btn-update" data-i18n="update">Update</button>
+        </div>
+
+        <!-- connection key -->
+        <section>
+            <div class="sec-title" data-i18n="connectionKey">Connection key</div>
+            <div class="row">
+                <input id="hookid" type="text" spellcheck="false" autocomplete="off"
+                    placeholder="00000000-0000-0000-0000-000000000000" />
+                <button id="btn-save-key" data-i18n="save">Save</button>
+            </div>
+            <div class="hint"><span data-i18n="keyHint">Get the key on the Pilot page:</span>
+                <a href="#" id="link-site">tarkov-market.com/pilot</a>
+            </div>
+            <div id="key-saved" class="saved-note hidden">✓</div>
+        </section>
+
+        <!-- statuses -->
+        <section>
+            <div class="sec-title" data-i18n="statuses">Statuses</div>
+            <div class="status-grid">
+                <div class="status-row">
+                    <span class="dot" id="dot-game"></span>
+                    <span class="status-name" data-i18n="gameFolder">Game folder</span>
+                    <span class="status-note path" id="note-game"></span>
+                    <span class="row-btns">
+                        <button id="btn-browse-game" data-i18n="browse">Browse</button>
+                        <button id="btn-clear-game" data-i18n="default">Default</button>
+                    </span>
+                    <span class="status-err hidden" id="err-game"></span>
+                </div>
+                <div class="status-row">
+                    <span class="dot" id="dot-logs"></span>
+                    <span class="status-name" data-i18n="gameLogs">Game logs</span>
+                    <span class="status-note" id="note-logs"></span>
+                </div>
+                <div class="status-row">
+                    <span class="dot" id="dot-screens"></span>
+                    <span class="status-name" data-i18n="screenshots">Screenshots</span>
+                    <span class="status-note path" id="note-screens"></span>
+                    <span class="row-btns">
+                        <button id="btn-browse-screens" data-i18n="browse">Browse</button>
+                        <button id="btn-clear-screens" data-i18n="default">Default</button>
+                    </span>
+                    <span class="status-err hidden" id="err-screens"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- options -->
+        <section>
+            <div class="sec-title" data-i18n="options">Options</div>
+            <div class="opt-row">
+                <label class="opt">
+                    <input type="checkbox" id="chk-autostart" />
+                    <span data-i18n="autostart">Start with Windows</span>
+                </label>
+                <label class="opt" data-i18n-title="autocleanHint">
+                    <input type="checkbox" id="chk-autoclean" />
+                    <span data-i18n="autoclean">Clean session screenshots</span>
+                </label>
+            </div>
+        </section>
+
+        <!-- event log -->
+        <section class="grow">
+            <div class="sec-title" data-i18n="events">Events</div>
+            <div id="event-log" class="event-log"></div>
+        </section>
+
+        <footer>
+            <span data-i18n="quitHint">The X button minimizes to tray, full quit —</span>
+            <button id="btn-quit" class="quit-btn" data-i18n="quit">Quit</button>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

@@ -1,51 +1,53 @@
 # TarkovPilot
 
-
-
-TarkovPilot is an Escape from Tarkov companion application that can automatically upload your screenshots file names to https://tarkov-market.com and show your position on map.
+TarkovPilot is an Escape from Tarkov companion application. It watches your game screenshots
+and logs and sends events to https://tarkov-market.com to show your position on the
+interactive map in real time.
 
 ## Features
 
 - Maps
-    - Show you position on map (from screenshots)
+    - Show your position on map (from screenshots)
     - <img src="https://github.com/ggdiam/TarkovPilot/blob/master/images/pilot-woods.png"/>
     - Show your look direction (require **pro** status on TM website)
     - <img src="https://github.com/ggdiam/TarkovPilot/blob/master/images/pilot-woods-look.png"/>
-    - Map change (if possible to determine from logs)
-    - Quests complete (if possible to determine from logs)
-- Automatic updates
-    - Press button on website to update  
-      No need to download new version every time
+    - Automatic map change (from game logs)
+    - Automatic quest completion (from game logs)
+- Settings window + tray icon
+    - Connection key, folders, autostart with Windows, event log — everything visible in the app
+- Built-in updates
+    - The app checks for new versions and updates itself with one click
 
-## UI
+## How it works
 
-App have no UI, only tray icon.  
-All configurations and logs you can find on TM website TarkovPilot's [page](https://tarkov-market.com/pilot)
+The app sends events (screenshot file name, map change, quest update) directly to the
+TM website backend over HTTPS, linked to your account by a **Connection key** from
+https://tarkov-market.com/pilot. The website map picks them up instantly.
 
-<img src="https://github.com/ggdiam/TarkovPilot/blob/master/images/TarkovPilot%20page.png"/>
+Source code lives in [`app/`](app/) (Go + Wails).
 
 ## Installation
 
-- Latest version you can find on TM website TarkovPilot's [page](https://tarkov-market.com/pilot).
-- Here on GitHub in [latest release](https://github.com/ggdiam/TarkovPilot/releases)
-
-Downloaded, extract the zip and run the `TarkovPilot.exe` executable. Open [TM website](https://tarkov-market.com/pilot), and see it's connected.
+- Download on TM website TarkovPilot [page](https://tarkov-market.com/pilot)
+- Unzip and run `TarkovPilot.exe`, paste your Connection key into the app window
 
 ## FAQ
 
 ### How does TarkovPilot work?
 
-- TarkovPilot watches the log files that the game creates as it's running.  
-  From some log messages possible to determine map, you are loading in.
+- TarkovPilot watches the log files that the game creates as it's running.
+  From some log messages it's possible to determine the map you are loading into
+  and quest events.
 
-- TarkovPilot watches the screenshot files that you make.  
-  In every screenshot file name coded info about position, where it was created.  
-  TarkovPilot just get this position and upload to TM website and show your position on map.
+- TarkovPilot watches the screenshot files that you make.
+  Every screenshot file name contains the position where it was created.
+  TarkovPilot sends this file name to the TM website which shows your position on map.
 
 ### Is TarkovPilot a cheat?
 
-No.  
-TarkovPilot just reading game logs, and your game screenshots.  
-Thats all.  
-There is no direct interaction with the game or game memory.  
-Also BSG or BattleEye devs always can check source code here to be sure app is purely safe and doesn't break TOS.
+No.
+TarkovPilot just reads game logs and your game screenshot file names.
+That's all.
+There is no interaction with the game process or game memory.
+Also BSG or BattleEye devs can always check the source code here to be sure the app
+is purely safe and doesn't break TOS.
