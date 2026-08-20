@@ -28,6 +28,8 @@ type Client struct {
 	checked atomic.Bool
 	// last status webhook replied bad_key — the key was rejected by the server
 	badKey atomic.Bool
+	// whether the connected website account has an active PRO subscription
+	pro atomic.Bool
 
 	http *http.Client
 }
@@ -43,11 +45,13 @@ func NewClient(hookId, host func() string) *Client {
 func (c *Client) ServerOK() bool      { return c.serverOK.Load() }
 func (c *Client) ServerChecked() bool { return c.checked.Load() }
 func (c *Client) BadKey() bool        { return c.badKey.Load() }
+func (c *Client) Pro() bool           { return c.pro.Load() }
 
 // ResetCheck — reset to the "checking" state (after the key or host changed)
 func (c *Client) ResetCheck() {
 	c.checked.Store(false)
 	c.badKey.Store(false)
+	c.pro.Store(false)
 }
 
 // AppStatus — the app block of the status event; fields mirror PilotAppStatus on the website
@@ -64,6 +68,48 @@ type statusResponse struct {
 	Ok            bool   `json:"ok"`
 	Error         string `json:"error"`
 	LatestVersion string `json:"latestVersion"`
+	Pro           bool   `json:"pro"`
+}
+
+// QuestSyncCharacter is a website character available as an import target.
+type QuestSyncCharacter struct {
+	UID      string `json:"uid"`
+	CharName string `json:"charName"`
+	GameMode string `json:"gameMode"`
+	Fraction string `json:"fraction"`
+	Level    int    `json:"level"`
+}
+
+// QuestSyncProfile is an anonymized EFT profile found in local logs.
+type QuestSyncProfile struct {
+	ProfileKey    string `json:"profileKey"`
+	GameMode      string `json:"gameMode"`
+	FoundCount    int    `json:"foundCount"`
+	MatchedCount  int    `json:"matchedCount"`
+	IgnoredCount  int    `json:"ignoredCount"`
+	FirstEventAt  string `json:"firstEventAt"`
+	LastEventAt   string `json:"lastEventAt"`
+	LinkedCharUID string `json:"linkedCharUid"`
+}
+
+// QuestImportResult describes one completed import operation.
+type QuestImportResult struct {
+	CharUID       string `json:"charUid"`
+	ImportedCount int    `json:"importedCount"`
+	AlreadyDone   int    `json:"alreadyDone"`
+	IgnoredCount  int    `json:"ignoredCount"`
+}
+
+// QuestSyncResponse is shared by scan, import, and create-and-import requests.
+type QuestSyncResponse struct {
+	Ok            bool                 `json:"ok"`
+	Error         string               `json:"error"`
+	Profiles      []QuestSyncProfile   `json:"profiles"`
+	Characters    []QuestSyncCharacter `json:"characters"`
+	SkippedEvents int                  `json:"skippedEvents"`
+	SourceSince   string               `json:"sourceSince"`
+	UpdatedAt     string               `json:"updatedAt"`
+	ImportResult  *QuestImportResult   `json:"importResult"`
 }
 
 func (c *Client) url() string {
@@ -120,10 +166,67 @@ func (c *Client) SendMap(mapName string) error {
 	return err
 }
 
-// SendQuest — quest event from the push-notifications log
-func (c *Client) SendQuest(questId, status string) error {
-	_, err := c.post(map[string]any{"event": "quest", "questId": questId, "status": status})
+// SendQuest — quest event from the push-notifications log with an anonymized profile key.
+func (c *Client) SendQuest(questId, status, profileKey, gameMode string) error {
+	payload := map[string]any{
+		"event":          "quest",
+		"questId":        questId,
+		"status":         status,
+		"profileRouting": true,
+	}
+	if profileKey != "" {
+		payload["profileKey"] = profileKey
+	}
+	if gameMode != "" {
+		payload["gameMode"] = gameMode
+	}
+	_, err := c.post(payload)
 	return err
+}
+
+// SendQuestScan uploads an anonymized snapshot and returns import targets from the website.
+func (c *Client) SendQuestScan(profiles any, skippedEvents int) (QuestSyncResponse, error) {
+	return c.questSyncPost(map[string]any{
+		"event":         "quest_scan",
+		"profiles":      profiles,
+		"skippedEvents": skippedEvents,
+	})
+}
+
+// ImportQuestProfile imports one scanned profile into an existing website character.
+func (c *Client) ImportQuestProfile(profileKey, charUID string) (QuestSyncResponse, error) {
+	return c.questSyncPost(map[string]any{
+		"event":      "quest_import",
+		"profileKey": profileKey,
+		"charUid":    charUID,
+	})
+}
+
+// CreateQuestCharacterAndImport creates a website character and imports the profile into it.
+func (c *Client) CreateQuestCharacterAndImport(profileKey, fraction string) (QuestSyncResponse, error) {
+	return c.questSyncPost(map[string]any{
+		"event":      "quest_create_import",
+		"profileKey": profileKey,
+		"fraction":   fraction,
+	})
+}
+
+func (c *Client) questSyncPost(payload map[string]any) (QuestSyncResponse, error) {
+	b, err := c.post(payload)
+	if err != nil {
+		return QuestSyncResponse{}, err
+	}
+	var resp QuestSyncResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return QuestSyncResponse{}, err
+	}
+	if !resp.Ok && resp.Error == "bad_key" {
+		c.badKey.Store(true)
+		c.pro.Store(false)
+	} else if !resp.Ok && resp.Error == "pro_required" {
+		c.pro.Store(false)
+	}
+	return resp, nil
 }
 
 // SendStatus — heartbeat with app statuses; returns the latest version from the website.
@@ -139,9 +242,11 @@ func (c *Client) SendStatus(st AppStatus) (latestVersion string, err error) {
 	}
 	if !resp.Ok && resp.Error == "bad_key" {
 		c.badKey.Store(true)
+		c.pro.Store(false)
 		return resp.LatestVersion, ErrBadKey
 	}
 	c.badKey.Store(false)
+	c.pro.Store(resp.Pro)
 	return resp.LatestVersion, nil
 }
 

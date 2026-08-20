@@ -18,6 +18,10 @@ export function ClearScreenshotsFolder() {
   return window['go']['main']['App']['ClearScreenshotsFolder']();
 }
 
+export function CreateQuestCharacterAndImport(arg1, arg2) {
+  return window['go']['main']['App']['CreateQuestCharacterAndImport'](arg1, arg2);
+}
+
 export function DoUpdate() {
   return window['go']['main']['App']['DoUpdate']();
 }
@@ -26,12 +30,20 @@ export function GetState() {
   return window['go']['main']['App']['GetState']();
 }
 
+export function ImportQuestProfile(arg1, arg2) {
+  return window['go']['main']['App']['ImportQuestProfile'](arg1, arg2);
+}
+
 export function OpenPilotPage() {
   return window['go']['main']['App']['OpenPilotPage']();
 }
 
 export function Quit() {
   return window['go']['main']['App']['Quit']();
+}
+
+export function ScanQuestHistory() {
+  return window['go']['main']['App']['ScanQuestHistory']();
 }
 
 export function SetAutoClean(arg1) {
@@ -48,4 +60,8 @@ export function SetHookId(arg1) {
 
 export function SetRegion(arg1) {
   return window['go']['main']['App']['SetRegion'](arg1);
+}
+
+export function TestConnection() {
+  return window['go']['main']['App']['TestConnection']();
 }

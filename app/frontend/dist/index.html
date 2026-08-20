@@ -100,6 +100,20 @@
             </div>
         </section>
 
+        <!-- quest progress sync lives entirely in the desktop app -->
+        <section>
+            <div class="quest-sync-entry">
+                <div>
+                    <div class="quest-sync-title" data-i18n="questSyncTitle">Quest progress</div>
+                    <div class="hint" data-i18n="questSyncHint">Import completed quests from EFT logs</div>
+                </div>
+                <button id="btn-quest-sync">
+                    <span data-i18n="questSync">Sync quests</span>
+                    <span class="pro-badge">PRO</span>
+                </button>
+            </div>
+        </section>
+
         <!-- event log -->
         <section class="grow">
             <div class="sec-title" data-i18n="events">Events</div>
@@ -110,6 +124,30 @@
             <span data-i18n="quitHint">The X button minimizes to tray, full quit —</span>
             <button id="btn-quit" class="quit-btn" data-i18n="quit">Quit</button>
         </footer>
+    </div>
+
+    <div id="quest-sync-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="quest-sync-heading">
+        <div class="modal-card">
+            <div class="modal-head">
+                <div>
+                    <div id="quest-sync-heading" class="modal-title" data-i18n="questSyncHeading">Sync completed quests</div>
+                    <div class="modal-subtitle" data-i18n="questSyncSince">EFT logs from 2026 onward</div>
+                </div>
+                <button id="btn-quest-sync-close" class="modal-close" aria-label="Close">&#xE8BB;</button>
+            </div>
+
+            <div class="quest-privacy" data-i18n="questSyncPrivacy">
+                Pilot reads logs on this PC. Only completed quest IDs and an anonymous character key are sent.
+            </div>
+
+            <div id="quest-sync-status" class="quest-sync-status"></div>
+            <div id="quest-sync-results" class="quest-sync-results hidden"></div>
+
+            <div class="modal-actions">
+                <button id="btn-quest-site" class="hidden" data-i18n="openPilotPage">Open Pilot page</button>
+                <button id="btn-quest-scan-again" class="hidden" data-i18n="scanAgain">Scan again</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>

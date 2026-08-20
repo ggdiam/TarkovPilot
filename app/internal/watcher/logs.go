@@ -2,7 +2,7 @@
 //
 // Every tick (1 sec):
 //   - the newest session folder in <game>\Logs is picked (new game session → new folder);
-//   - new COMPLETE lines of *application_*.log and *push-notifications_*.log are read
+//   - new COMPLETE lines of application, backend and push-notifications logs are read
 //     (an unfinished last line waits until the next tick);
 //   - when a file is first seen, the position is set to its end (old events are not replayed).
 //
@@ -45,12 +45,14 @@ type LogsWatcher struct {
 	mu     sync.Mutex
 	stopCh chan struct{}
 
-	logsFolder    string
-	currentFolder string
-	positions     map[string]int64
+	logsFolder       string
+	currentFolder    string
+	positions        map[string]int64
+	activeProfileKey string
+	activeGameMode   string
 
 	OnMap   func(rawMap string)
-	OnQuest func(questId, status string)
+	OnQuest func(questId, status, profileKey, gameMode string)
 	OnLog   func(msg string)
 }
 
@@ -77,6 +79,8 @@ func (w *LogsWatcher) Start(logsFolder string) {
 	w.logsFolder = logsFolder
 	w.currentFolder = ""
 	w.positions = map[string]int64{}
+	w.activeProfileKey = ""
+	w.activeGameMode = ""
 	stopCh := make(chan struct{})
 	w.stopCh = stopCh
 	w.mu.Unlock()
@@ -120,6 +124,8 @@ func (w *LogsWatcher) poll() {
 		// the game was restarted — a new session folder
 		w.currentFolder = latest
 		w.positions = map[string]int64{}
+		w.activeProfileKey = ""
+		w.activeGameMode = ""
 		activeSessionChanged = true
 	}
 	w.mu.Unlock()
@@ -131,7 +137,7 @@ func (w *LogsWatcher) poll() {
 	}
 
 	files := []string{}
-	for _, pattern := range []string{"*application_*.log", "*push-notifications_*.log"} {
+	for _, pattern := range []string{"*application_*.log", "*backend_*.log", "*push-notifications_*.log"} {
 		matches, _ := filepath.Glob(filepath.Join(latest, pattern))
 		files = append(files, matches...)
 	}
@@ -148,6 +154,10 @@ func (w *LogsWatcher) poll() {
 
 		// first time we see the file — start from the end (tail)
 		if !known {
+			base := strings.ToLower(filepath.Base(path))
+			if strings.Contains(base, "application_") || strings.Contains(base, "backend_") {
+				w.readCurrentProfileState(path)
+			}
 			w.mu.Lock()
 			w.positions[path] = fi.Size()
 			w.mu.Unlock()
@@ -161,6 +171,31 @@ func (w *LogsWatcher) poll() {
 
 		if len(lines) > 0 {
 			w.processLines(lines)
+		}
+	}
+}
+
+// readCurrentProfileState restores routing state when the app starts in the middle
+// of an EFT session. It intentionally ignores maps and quest notifications.
+func (w *LogsWatcher) readCurrentProfileState(path string) {
+	f, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	scanner := newLogScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if match := profileIdRe.FindStringSubmatch(line); match != nil {
+			w.mu.Lock()
+			w.activeProfileKey = hashProfileId(match[1])
+			w.mu.Unlock()
+		}
+		if match := gatewayModeRe.FindStringSubmatch(line); match != nil {
+			w.mu.Lock()
+			w.activeGameMode = normalizeGameMode(match[1])
+			w.mu.Unlock()
 		}
 	}
 }
@@ -221,6 +256,17 @@ func (w *LogsWatcher) processLines(lines []string) {
 			continue
 		}
 
+		if match := profileIdRe.FindStringSubmatch(line); match != nil {
+			w.mu.Lock()
+			w.activeProfileKey = hashProfileId(match[1])
+			w.mu.Unlock()
+		}
+		if match := gatewayModeRe.FindStringSubmatch(line); match != nil {
+			w.mu.Lock()
+			w.activeGameMode = normalizeGameMode(match[1])
+			w.mu.Unlock()
+		}
+
 		if strings.Contains(line, locationSubstring) {
 			if m := locationRe.FindStringSubmatch(line); m != nil {
 				w.emitMap(strings.ToLower(m[1]))
@@ -265,7 +311,11 @@ func (w *LogsWatcher) processLines(lines []string) {
 
 			status := statusToString(rec.Message.Type)
 			if w.OnQuest != nil {
-				w.OnQuest(questId, status)
+				w.mu.Lock()
+				profileKey := w.activeProfileKey
+				gameMode := w.activeGameMode
+				w.mu.Unlock()
+				w.OnQuest(questId, status, profileKey, gameMode)
 			}
 		}
 	}

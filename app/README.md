@@ -25,6 +25,7 @@ is done by an internal deploy script (not in this repo — it is public): it run
 ## Structure
 
 - `main.go` — Wails bootstrap, single instance (mutex), systray (fyne.io/systray)
+- `autostart.go` — Windows Run entry; autostart uses `--hidden` to launch directly into the tray
 - `app.go` — the core: state, frontend bindings, heartbeat (60 sec), website version
   polling (10 min, `GET /api/be/pilot/version`, host by region; newer — Update banner +
   a single Windows notification), connection status `connState`, watcher events

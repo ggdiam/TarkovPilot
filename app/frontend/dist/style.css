@@ -276,6 +276,11 @@ button:hover {
     color: var(--accent-light);
 }
 
+button:disabled {
+    cursor: default;
+    opacity: 0.45;
+}
+
 .hint {
     color: var(--muted);
     font-size: 13px;
@@ -385,6 +390,207 @@ button:hover {
     accent-color: var(--accent);
 }
 
+.quest-sync-entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius);
+}
+
+.quest-sync-title {
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.pro-badge {
+    margin-left: 5px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 10px;
+    font-weight: 800;
+    vertical-align: 1px;
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.modal-card {
+    width: min(680px, 100%);
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75);
+}
+
+.modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.modal-title {
+    color: var(--accent-light);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.modal-subtitle {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    padding: 0;
+    border: none;
+    color: var(--muted);
+    font-family: "Segoe MDL2 Assets";
+}
+
+.quest-privacy {
+    padding: 10px 12px;
+    color: var(--alt);
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    line-height: 1.45;
+}
+
+.quest-sync-status {
+    min-height: 20px;
+    color: var(--alt);
+    font-weight: 600;
+}
+
+.quest-sync-status.loading::before {
+    content: '';
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 8px;
+    border: 2px solid var(--muted);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: quest-spin 0.8s linear infinite;
+}
+
+@keyframes quest-spin {
+    to { transform: rotate(360deg); }
+}
+
+.quest-sync-status.success {
+    color: var(--ok);
+}
+
+.quest-sync-status.error {
+    color: var(--err);
+}
+
+.quest-sync-status.warning {
+    color: var(--accent-light);
+}
+
+.quest-sync-results {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.quest-profile {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius);
+}
+
+.quest-profile-head,
+.quest-target-row,
+.modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quest-profile-title {
+    flex: 1;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.quest-count {
+    color: var(--ok);
+    font-weight: 600;
+}
+
+.quest-meta {
+    color: var(--muted);
+    font-size: 12.5px;
+}
+
+.quest-target {
+    margin-top: 4px;
+    padding-top: 9px;
+    border-top: 1px solid var(--divider);
+}
+
+.quest-target.create {
+    margin-top: 0;
+    padding-top: 4px;
+    border-top: none;
+}
+
+.quest-target-label {
+    margin-bottom: 6px;
+    color: var(--alt);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.quest-character-select {
+    flex: 1;
+    min-width: 0;
+}
+
+.quest-no-target {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.modal-actions {
+    justify-content: flex-end;
+}
+
 select {
     background: var(--panel);
     border: 1px solid var(--border-faint);
@@ -409,16 +615,19 @@ select {
     user-select: text;
 }
 
-.event-log::-webkit-scrollbar {
+.event-log::-webkit-scrollbar,
+.quest-sync-results::-webkit-scrollbar {
     width: 10px;
 }
 
-.event-log::-webkit-scrollbar-thumb {
+.event-log::-webkit-scrollbar-thumb,
+.quest-sync-results::-webkit-scrollbar-thumb {
     background: var(--scroll-thumb);
     border: 1px solid var(--scroll-track);
 }
 
-.event-log::-webkit-scrollbar-track {
+.event-log::-webkit-scrollbar-track,
+.quest-sync-results::-webkit-scrollbar-track {
     background: var(--scroll-track);
 }
 

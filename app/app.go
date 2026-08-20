@@ -50,6 +50,7 @@ type State struct {
 	GameFound           bool `json:"gameFound"`
 	LogsWatching        bool `json:"logsWatching"`
 	ScreenshotsWatching bool `json:"screenshotsWatching"`
+	Pro                 bool `json:"pro"`
 
 	// server connection state: nokey | checking | ok | badkey | offline
 	ConnState string `json:"connState"`
@@ -76,6 +77,8 @@ type App struct {
 	trayUpdate func(lang string)
 
 	statusCh chan struct{}
+
+	questSyncMu sync.Mutex
 }
 
 func NewApp() *App {
@@ -230,10 +233,10 @@ func (a *App) onMapChange(rawMap string) {
 	}()
 }
 
-func (a *App) onQuest(questId, status string) {
+func (a *App) onQuest(questId, status, profileKey, gameMode string) {
 	a.logEvent("Quest update: " + questId + " status: " + status)
 	go func() {
-		if err := a.client.SendQuest(questId, status); err != nil {
+		if err := a.client.SendQuest(questId, status, profileKey, gameMode); err != nil {
 			a.logEvent("Send error: " + err.Error())
 		}
 		a.emitState()
@@ -418,6 +421,7 @@ func (a *App) buildState() State {
 		GameFound:           st.GameFound,
 		LogsWatching:        st.LogsWatching,
 		ScreenshotsWatching: st.ScreenshotsWatching,
+		Pro:                 a.client.Pro(),
 		ConnState:           a.connState(),
 
 		AutoStart: isAutoStartEnabled(),
@@ -438,10 +442,21 @@ func (a *App) emitState() {
 func (a *App) GetState() State { return a.buildState() }
 
 func (a *App) SetHookId(hookId string) State {
+	hookId = strings.TrimSpace(hookId)
 	config.Update(func(s *config.Settings) { s.HookId = hookId })
 	a.client.ResetCheck()
+	if hookId == "" {
+		a.logEvent("Connection key removed")
+		return a.buildState()
+	}
 	a.logEvent("Connection key saved")
 	// check the key synchronously: the UI waits for "accepted / rejected / offline"
+	a.sendStatus()
+	return a.buildState()
+}
+
+// TestConnection sends the current app status immediately without changing the saved key.
+func (a *App) TestConnection() State {
 	a.sendStatus()
 	return a.buildState()
 }
@@ -527,6 +542,87 @@ func (a *App) ClearScreenshotsFolder() State {
 	a.restartWatchers()
 	a.requestStatusSend()
 	return a.buildState()
+}
+
+// ScanQuestHistory scans local EFT logs from 2026 onward and sends only hashed
+// profile keys and completed quest ids to the website.
+func (a *App) ScanQuestHistory() api.QuestSyncResponse {
+	a.questSyncMu.Lock()
+	defer a.questSyncMu.Unlock()
+
+	if config.Get().HookId == "" {
+		return questSyncFailure("connection_required")
+	}
+	if !a.client.Pro() {
+		return questSyncFailure("pro_required")
+	}
+
+	cfg := config.Get()
+	logsFolder := detect.LogsFolder(detect.GameFolder(cfg.GameFolder))
+	since := time.Date(2026, 1, 1, 0, 0, 0, 0, time.Local)
+	scan, err := watcher.ScanQuestHistory(logsFolder, since)
+	if err != nil {
+		a.logEvent("Quest history scan failed: " + err.Error())
+		return questSyncFailure("logs_not_found")
+	}
+
+	resp, err := a.client.SendQuestScan(scan.Profiles, scan.SkippedEvents)
+	if err != nil {
+		a.logEvent("Quest history upload failed: " + err.Error())
+		a.emitState()
+		return questSyncFailure("network_error")
+	}
+	if !resp.Ok {
+		a.emitState()
+		return resp
+	}
+
+	quests := 0
+	for _, profile := range scan.Profiles {
+		quests += len(profile.QuestIds)
+	}
+	a.logEvent(fmt.Sprintf("Quest history scan: %d profiles, %d completed quests", len(scan.Profiles), quests))
+	return resp
+}
+
+// ImportQuestProfile imports one scanned local profile into a website character.
+func (a *App) ImportQuestProfile(profileKey, charUID string) api.QuestSyncResponse {
+	a.questSyncMu.Lock()
+	defer a.questSyncMu.Unlock()
+
+	resp, err := a.client.ImportQuestProfile(profileKey, charUID)
+	if err != nil {
+		a.logEvent("Quest history import failed: " + err.Error())
+		a.emitState()
+		return questSyncFailure("network_error")
+	}
+	if resp.Ok && resp.ImportResult != nil {
+		a.logEvent(fmt.Sprintf("Quest history imported: %d new quests", resp.ImportResult.ImportedCount))
+	}
+	a.emitState()
+	return resp
+}
+
+// CreateQuestCharacterAndImport creates a website character and imports a scanned profile.
+func (a *App) CreateQuestCharacterAndImport(profileKey, fraction string) api.QuestSyncResponse {
+	a.questSyncMu.Lock()
+	defer a.questSyncMu.Unlock()
+
+	resp, err := a.client.CreateQuestCharacterAndImport(profileKey, fraction)
+	if err != nil {
+		a.logEvent("Quest character creation failed: " + err.Error())
+		a.emitState()
+		return questSyncFailure("network_error")
+	}
+	if resp.Ok && resp.ImportResult != nil {
+		a.logEvent(fmt.Sprintf("Quest character created and imported: %d new quests", resp.ImportResult.ImportedCount))
+	}
+	a.emitState()
+	return resp
+}
+
+func questSyncFailure(code string) api.QuestSyncResponse {
+	return api.QuestSyncResponse{Ok: false, Error: code}
 }
 
 // OpenPilotPage opens the Pilot page on the website (where the connection key is).

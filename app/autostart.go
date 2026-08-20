@@ -11,6 +11,16 @@ import (
 
 const runKeyPath = `Software\Microsoft\Windows\CurrentVersion\Run`
 const runValueName = "TarkovPilot"
+const autoStartArg = "--hidden"
+
+func autoStartCommand(exe string) string {
+	return `"` + exe + `" ` + autoStartArg
+}
+
+func autoStartValueMatches(value, exe string) bool {
+	// Accept the old value so an existing opt-in can be migrated on startup.
+	return value == autoStartCommand(exe) || value == `"`+exe+`"`
+}
 
 func isAutoStartEnabled() bool {
 	k, err := registry.OpenKey(registry.CURRENT_USER, runKeyPath, registry.QUERY_VALUE)
@@ -24,8 +34,11 @@ func isAutoStartEnabled() bool {
 		return false
 	}
 
-	exe, _ := os.Executable()
-	return v == `"`+exe+`"`
+	exe, err := os.Executable()
+	if err != nil {
+		return false
+	}
+	return autoStartValueMatches(v, exe)
 }
 
 func setAutoStart(enabled bool) error {
@@ -47,5 +60,5 @@ func setAutoStart(enabled bool) error {
 	if err != nil {
 		return err
 	}
-	return k.SetStringValue(runValueName, `"`+exe+`"`)
+	return k.SetStringValue(runValueName, autoStartCommand(exe))
 }

@@ -27,15 +27,25 @@ var assets embed.FS
 var trayIcon []byte
 
 func main() {
+	args := os.Args[1:]
+	startHidden := hasLaunchArg(args, autoStartArg)
+
 	// single instance (like the C# version: a named mutex).
 	// After self-update the updater launches the new exe with the "updated" arg
 	// BEFORE the old process has exited and released the mutex — in that
 	// case don't give up right away, wait for it to be released
-	if !acquireSingleInstance(len(os.Args) > 1 && os.Args[1] == "updated") {
+	if !acquireSingleInstance(hasLaunchArg(args, "updated")) {
 		return
 	}
 
 	app := NewApp()
+	// Rewrite legacy autostart entries once the new version runs, so users who
+	// already enabled the option also start directly in the tray next time.
+	if isAutoStartEnabled() {
+		if err := setAutoStart(true); err != nil {
+			app.logEvent("Autostart error: " + err.Error())
+		}
+	}
 
 	err := wails.Run(&options.App{
 		Title:  "TarkovPilot",
@@ -50,6 +60,8 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 1},
 		// closing the window doesn't kill the app — it lives in the tray
 		HideWindowOnClose: true,
+		// Windows autostart passes --hidden; a regular launch remains visible.
+		StartHidden: startHidden,
 		OnStartup: func(ctx context.Context) {
 			app.startup(ctx)
 			// systray in its own goroutine: systray.Run blocks; on Windows
@@ -69,6 +81,15 @@ func main() {
 	if err != nil {
 		println("Error:", err.Error())
 	}
+}
+
+func hasLaunchArg(args []string, target string) bool {
+	for _, arg := range args {
+		if arg == target {
+			return true
+		}
+	}
+	return false
 }
 
 // acquireSingleInstance acquires the single-instance named mutex.
