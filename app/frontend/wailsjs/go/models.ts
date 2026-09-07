@@ -131,6 +131,7 @@ export namespace main {
 	    connState: string;
 	    autoStart: boolean;
 	    autoClean: boolean;
+	    startMinimized: boolean;
 	    eventLog: string[];
 	
 	    static createFrom(source: any = {}) {
@@ -156,6 +157,7 @@ export namespace main {
 	        this.connState = source["connState"];
 	        this.autoStart = source["autoStart"];
 	        this.autoClean = source["autoClean"];
+	        this.startMinimized = source["startMinimized"];
 	        this.eventLog = source["eventLog"];
 	    }
 	}
