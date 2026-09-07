@@ -33,4 +33,6 @@ export function SetHookId(arg1:string):Promise<main.State>;
 
 export function SetRegion(arg1:string):Promise<main.State>;
 
+export function SetStartMinimized(arg1:boolean):Promise<main.State>;
+
 export function TestConnection():Promise<main.State>;

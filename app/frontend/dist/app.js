@@ -49,6 +49,8 @@ const i18n = {
         default: 'Default',
         options: 'Options',
         autostart: 'Start with Windows',
+        startMinimized: 'Start minimized',
+        startMinimizedHint: 'Launch directly to the tray without showing the window',
         autoclean: 'Clean session screenshots',
         autocleanHint: 'Delete screenshots taken this session when the map changes',
         region: 'Region',
@@ -125,6 +127,8 @@ const i18n = {
         default: 'По умолчанию',
         options: 'Опции',
         autostart: 'Автозапуск с Windows',
+        startMinimized: 'Запускать свёрнутым',
+        startMinimizedHint: 'Запуск сразу в трей, без показа окна',
         autoclean: 'Удалять скриншоты сессии',
         autocleanHint: 'Скриншоты, сделанные за сессию, удаляются при смене карты',
         region: 'Регион',
@@ -270,6 +274,7 @@ const render = (st) => {
 
     // options
     $('chk-autostart').checked = st.autoStart;
+    $('chk-start-minimized').checked = st.startMinimized;
     $('chk-autoclean').checked = st.autoClean;
 
     // event log
@@ -574,6 +579,7 @@ const bind = () => {
     $('btn-clear-screens').addEventListener('click', async () => render(await App().ClearScreenshotsFolder()));
 
     $('chk-autostart').addEventListener('change', async (e) => render(await App().SetAutoStart(e.target.checked)));
+    $('chk-start-minimized').addEventListener('change', async (e) => render(await App().SetStartMinimized(e.target.checked)));
     $('chk-autoclean').addEventListener('change', async (e) => render(await App().SetAutoClean(e.target.checked)));
 
     $('btn-quest-sync').addEventListener('click', openQuestSync);

@@ -28,7 +28,10 @@ var trayIcon []byte
 
 func main() {
 	args := os.Args[1:]
-	startHidden := hasLaunchArg(args, autoStartArg)
+	// settings are needed before the window is created: the "start minimized"
+	// option decides whether the window is shown at all
+	cfg := config.Load()
+	startHidden := hasLaunchArg(args, autoStartArg) || cfg.StartMinimized
 
 	// single instance (like the C# version: a named mutex).
 	// After self-update the updater launches the new exe with the "updated" arg
@@ -60,7 +63,8 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 1},
 		// closing the window doesn't kill the app — it lives in the tray
 		HideWindowOnClose: true,
-		// Windows autostart passes --hidden; a regular launch remains visible.
+		// Windows autostart passes --hidden; a regular launch remains visible
+		// unless the "start minimized" option is enabled.
 		StartHidden: startHidden,
 		OnStartup: func(ctx context.Context) {
 			app.startup(ctx)
