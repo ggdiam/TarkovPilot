@@ -17,10 +17,11 @@ import (
 const questCompleteStatus = "12"
 
 var (
-	logFolderYearRe = regexp.MustCompile(`^log_(\d{4})\.`)
-	profileIdRe     = regexp.MustCompile(`(?i)(?:CompleteSelectedProfile\s+ProfileId:|profileStatus.*?Profileid:\s*)\s*([0-9a-f]{24})`)
-	gatewayModeRe   = regexp.MustCompile(`(?i)https://gw-(pvp-season|pve|pvp)\.`)
-	questIdRe       = regexp.MustCompile(`^[0-9a-f]{24}$`)
+	logFolderYearRe    = regexp.MustCompile(`^log_(\d{4})\.`)
+	profileIdRe        = regexp.MustCompile(`(?i)(?:CompleteSelectedProfile\s+ProfileId:|profileStatus.*?Profileid:\s*)\s*([0-9a-f]{24})`)
+	gatewayModeRe      = regexp.MustCompile(`(?i)https://gw-(pvp-season|pve|pvp)\.`)
+	questIdRe          = regexp.MustCompile(`^[0-9a-f]{24}$`)
+	prestigeResponseRe = regexp.MustCompile(`(?i)<--- Response HTTPS,.*?URL:\s*https://gw-(pvp-season|pve|pvp)\.[^/\s]+/client/prestige/obtain,.*?responseText:\s*(.*)$`)
 )
 
 // QuestScanProfile is an anonymized EFT profile with completed quests found in logs.
@@ -43,6 +44,7 @@ type historyEventKind int
 const (
 	historyMode historyEventKind = iota
 	historyProfile
+	historyReset
 	historyQuest
 )
 
@@ -59,6 +61,12 @@ type questCompletion struct {
 	questId    string
 }
 
+type questHistoryReset struct {
+	at         time.Time
+	profileKey string
+	gameMode   string
+}
+
 type profileModes map[string]map[string]struct{}
 
 // ScanQuestHistory scans EFT sessions without exposing the raw EFT profile id.
@@ -69,6 +77,7 @@ func ScanQuestHistory(logsFolder string, since time.Time) (QuestHistoryScan, err
 	}
 
 	var completions []questCompletion
+	var resets []questHistoryReset
 	knownModes := profileModes{}
 	for _, entry := range entries {
 		if !entry.IsDir() || !sessionCanContainDate(entry.Name(), since) {
@@ -78,10 +87,12 @@ func ScanQuestHistory(logsFolder string, since time.Time) (QuestHistoryScan, err
 		if err != nil {
 			continue
 		}
-		completions = append(completions, correlateSessionEvents(events, knownModes)...)
+		sessionCompletions, sessionResets := correlateSessionEvents(events, knownModes)
+		completions = append(completions, sessionCompletions...)
+		resets = append(resets, sessionResets...)
 	}
 
-	return buildQuestHistoryScan(completions, knownModes), nil
+	return buildQuestHistoryScan(completions, knownModes, resets), nil
 }
 
 func sessionCanContainDate(name string, since time.Time) bool {
@@ -134,12 +145,33 @@ func scanStateLog(path string, since time.Time) ([]historyEvent, error) {
 	defer f.Close()
 
 	var events []historyEvent
+	var resetAt time.Time
+	var resetMode string
+	var responseLines []string
+	flushReset := func() {
+		if !resetAt.IsZero() && prestigeResponseSucceeded(strings.Join(responseLines, "\n")) {
+			events = append(events, historyEvent{at: resetAt, kind: historyReset, value: resetMode})
+		}
+		resetAt = time.Time{}
+		responseLines = nil
+	}
 	scanner := newLogScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
 		at, ok := parseLogTime(line)
-		if !ok || at.Before(since) {
+		if !ok {
+			if !resetAt.IsZero() {
+				responseLines = append(responseLines, line)
+			}
 			continue
+		}
+		flushReset()
+		if at.Before(since) {
+			continue
+		}
+		if match := prestigeResponseRe.FindStringSubmatch(line); match != nil {
+			resetAt, resetMode = at, normalizeGameMode(match[1])
+			responseLines = append(responseLines, match[2])
 		}
 		if match := gatewayModeRe.FindStringSubmatch(line); match != nil {
 			events = append(events, historyEvent{at: at, kind: historyMode, value: normalizeGameMode(match[1])})
@@ -148,7 +180,29 @@ func scanStateLog(path string, since time.Time) ([]historyEvent, error) {
 			events = append(events, historyEvent{at: at, kind: historyProfile, value: hashProfileId(match[1])})
 		}
 	}
+	flushReset()
 	return events, scanner.Err()
+}
+
+func prestigeResponseSucceeded(body string) bool {
+	body = strings.TrimSpace(body)
+	// EFT normally omits response bodies; the completed response is the boundary.
+	if body == "" {
+		return true
+	}
+	var response map[string]json.RawMessage
+	if json.Unmarshal([]byte(body), &response) != nil || response == nil {
+		return false
+	}
+	for _, field := range []string{"err", "error", "errmsg"} {
+		if raw, ok := response[field]; ok {
+			value := strings.TrimSpace(string(raw))
+			if value != "0" && value != `"0"` && value != "null" && value != "false" && value != `""` {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func scanQuestLog(path string, since time.Time) ([]historyEvent, error) {
@@ -217,7 +271,7 @@ func parseLogTime(line string) (time.Time, bool) {
 	return time.Time{}, false
 }
 
-func correlateSessionEvents(events []historyEvent, knownModes profileModes) []questCompletion {
+func correlateSessionEvents(events []historyEvent, knownModes profileModes) ([]questCompletion, []questHistoryReset) {
 	profilesInSession := map[string]struct{}{}
 	for _, event := range events {
 		if event.kind == historyProfile {
@@ -234,6 +288,7 @@ func correlateSessionEvents(events []historyEvent, knownModes profileModes) []qu
 
 	var currentProfile, currentMode string
 	var completions []questCompletion
+	var resets []questHistoryReset
 	for _, event := range events {
 		switch event.kind {
 		case historyMode:
@@ -242,6 +297,14 @@ func correlateSessionEvents(events []historyEvent, knownModes profileModes) []qu
 		case historyProfile:
 			currentProfile = event.value
 			rememberProfileMode(knownModes, currentProfile, currentMode)
+		case historyReset:
+			profileKey := currentProfile
+			if profileKey == "" {
+				profileKey = onlyProfile
+			}
+			if profileKey != "" {
+				resets = append(resets, questHistoryReset{at: event.at, profileKey: profileKey, gameMode: event.value})
+			}
 		case historyQuest:
 			profileKey := currentProfile
 			if profileKey == "" {
@@ -253,7 +316,7 @@ func correlateSessionEvents(events []historyEvent, knownModes profileModes) []qu
 			})
 		}
 	}
-	return completions
+	return completions, resets
 }
 
 func rememberProfileMode(modes profileModes, profileKey, gameMode string) {
@@ -266,13 +329,21 @@ func rememberProfileMode(modes profileModes, profileKey, gameMode string) {
 	modes[profileKey][gameMode] = struct{}{}
 }
 
-func buildQuestHistoryScan(completions []questCompletion, knownModes profileModes) QuestHistoryScan {
+func buildQuestHistoryScan(completions []questCompletion, knownModes profileModes, resets []questHistoryReset) QuestHistoryScan {
 	type profileAccumulator struct {
 		QuestScanProfile
 		quests map[string]struct{}
 	}
 	profiles := map[string]*profileAccumulator{}
 	result := QuestHistoryScan{}
+	// Folder names are lexically ordered, so apply the latest reset after scanning all sessions.
+	latestReset := map[string]time.Time{}
+	for _, reset := range resets {
+		key := reset.gameMode + ":" + reset.profileKey
+		if reset.at.After(latestReset[key]) {
+			latestReset[key] = reset.at
+		}
+	}
 
 	for _, completion := range completions {
 		if completion.profileKey == "" {
@@ -291,6 +362,9 @@ func buildQuestHistoryScan(completions []questCompletion, knownModes profileMode
 		}
 
 		key := gameMode + ":" + completion.profileKey
+		if cutoff, ok := latestReset[key]; ok && !completion.at.After(cutoff) {
+			continue
+		}
 		acc := profiles[key]
 		if acc == nil {
 			acc = &profileAccumulator{
