@@ -55,9 +55,10 @@ type State struct {
 	// server connection state: nokey | checking | ok | badkey | offline
 	ConnState string `json:"connState"`
 
-	AutoStart bool     `json:"autoStart"`
-	AutoClean bool     `json:"autoClean"`
-	EventLog  []string `json:"eventLog"`
+	AutoStart      bool     `json:"autoStart"`
+	AutoClean      bool     `json:"autoClean"`
+	StartMinimized bool     `json:"startMinimized"`
+	EventLog       []string `json:"eventLog"`
 }
 
 type App struct {
@@ -106,8 +107,8 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
+	// settings are loaded in main() before the window is created
 	updater.CleanupOldBinary()
-	config.Load()
 
 	// the log file must not grow forever — on start drop it if it got big
 	if fi, err := os.Stat(eventsLogPath()); err == nil && fi.Size() > 1<<20 {
@@ -424,9 +425,10 @@ func (a *App) buildState() State {
 		Pro:                 a.client.Pro(),
 		ConnState:           a.connState(),
 
-		AutoStart: isAutoStartEnabled(),
-		AutoClean: cfg.AutoClean,
-		EventLog:  eventLog,
+		AutoStart:      isAutoStartEnabled(),
+		AutoClean:      cfg.AutoClean,
+		StartMinimized: cfg.StartMinimized,
+		EventLog:       eventLog,
 	}
 }
 
@@ -487,6 +489,12 @@ func (a *App) SetRegion(region string) State {
 
 func (a *App) SetAutoClean(enabled bool) State {
 	config.Update(func(s *config.Settings) { s.AutoClean = enabled })
+	return a.buildState()
+}
+
+// SetStartMinimized — start in the tray on every launch (takes effect on the next start)
+func (a *App) SetStartMinimized(enabled bool) State {
+	config.Update(func(s *config.Settings) { s.StartMinimized = enabled })
 	return a.buildState()
 }
 

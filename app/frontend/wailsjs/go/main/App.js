@@ -62,6 +62,10 @@ export function SetRegion(arg1) {
   return window['go']['main']['App']['SetRegion'](arg1);
 }
 
+export function SetStartMinimized(arg1) {
+  return window['go']['main']['App']['SetStartMinimized'](arg1);
+}
+
 export function TestConnection() {
   return window['go']['main']['App']['TestConnection']();
 }

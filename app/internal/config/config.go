@@ -25,6 +25,9 @@ type Settings struct {
 	// delete current session's screenshots on map change (like the ps1 script)
 	AutoClean bool `json:"autoClean"`
 
+	// start directly in the tray on every launch (not only via Windows autostart)
+	StartMinimized bool `json:"startMinimized"`
+
 	// UI language: "en" | "ru"
 	Lang string `json:"lang"`
 }
